@@ -7,17 +7,18 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-char** parser(char* input) {
+char** parse(char* input) {
     char **args = malloc(64 * sizeof(char *));
     int argc=0;
     int is_token=0;
-    for (int i=0; i<strlen(input); i++) {
+    size_t len= strlen(input);
+    for (int i=0; i<=len; i++) {
         if (isspace(input[i])==0 && is_token==0){
             args[argc]=&input[i];
             argc++;
             is_token=1;
         }
-        else if (isspace(input[i])!=0 && is_token==1) {
+        else if ((isspace(input[i])!=0 && is_token==1)||(input[i]=='\0' && is_token==1)) {
             input[i] = '\0';
             is_token=0;
         }

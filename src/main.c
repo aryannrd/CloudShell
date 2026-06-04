@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
-
+#include <stdlib.h>
+#include "../include/myshell.h"
 
 int main(void) {
     char buf[1024];
@@ -14,7 +15,12 @@ int main(void) {
         if (strcmp(input,"") == 0) {
             continue;
         }
-        printf("Got %s\n", input);
+        char** args= parse(input);
+        if (args[0]==NULL) {
+            continue;
+        }
+        execute(args);
+        free(args);
     }
 }
 
