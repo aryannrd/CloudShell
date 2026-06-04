@@ -14,13 +14,14 @@ int execute(char** args) {
     }
     if (p==0) {
         execvp(args[0],args);
-        fprintf(stderr, "%s command not found",args[0]);
-        exit(1);
+        fprintf(stderr, "%s command not found\n",args[0]);
+        exit(127);
     }
     else {
         int status;
         waitpid(p,&status,0);
-        return WEXITSTATUS(status);
+        if (WIFEXITED(status)) {
+            return WEXITSTATUS(status);
+        }
     }
-
 }

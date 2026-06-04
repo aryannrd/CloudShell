@@ -7,7 +7,7 @@
 int main(void) {
     char buf[1024];
     char interface[1024];
-
+    int last_status=0;
     while (1) {
         if (getcwd(interface, sizeof(interface))!=NULL){
             printf("myshell:%s> ", interface);
@@ -26,8 +26,11 @@ int main(void) {
         if (args[0]==NULL) {
             continue;
         }
-        execute(args);
+        last_status=execute(args);
         free(args);
+        if (last_status!=0) {
+            printf("exit status: %d\n", last_status);
+        }
     }
 }
 
