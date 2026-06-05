@@ -25,12 +25,12 @@ int execute_builtin(char**args) {
 
 int check_builtin(char** args) {
     if (strcmp(args[0],"cd")==0) {
-        return 0;
+        return 1;
     }
     if (strcmp(args[0],"exit")==0) {
-        return 0;
+        return 1;
     }
-    return -1;
+    return 0;
 }
 
 

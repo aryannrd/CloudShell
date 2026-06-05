@@ -8,4 +8,6 @@ int execute(char** args);
 char** parse(char*input);
 int execute_builtin(char**args);
 int check_builtin(char** args);
+char** exec_redirect(char** args);
+int has_redirect(char** args);
 #endif //MOCK_SHELL_MYSHELL_H

@@ -11,9 +11,12 @@ int main(void) {
     while (1) {
         if (getcwd(interface, sizeof(interface))!=NULL){
             printf("myshell:%s> ", interface);
+            fflush(stdout);
         }
         else {
             printf("myshell> ");
+            fflush(stdout);
+
         }
         if (fgets(buf, sizeof(buf), stdin) == NULL) {
             break;
@@ -23,6 +26,7 @@ int main(void) {
             continue;
         }
         char** args= parse(buf);
+
         if (args[0]==NULL) {
             continue;
         }
