@@ -12,4 +12,6 @@ add_executable(mock_shell src/main.c
         src/redirect.c
         src/jobs.c
         src/signals.c
-        src/util.c)
+        src/util.c
+        tests/hhh.cpp
+        tests/hhh.h)

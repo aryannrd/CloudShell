@@ -13,8 +13,17 @@ int execute(char** args) {
         return -1;
     }
     if (p==0) {
-        if (has_redirect(args)==1) {
-            char** clean_args=exec_redirect(args);
+        int redir = has_redirect(args);
+        if (redir==1) {
+            char** clean_args=exec_output_redirect(args);
+            if (clean_args == NULL) { exit(1); }
+            execvp(clean_args[0], clean_args);
+            free(clean_args);
+            fprintf(stderr, "%s command not found\n",args[0]);
+            exit(127);
+        }
+        else if (redir==2) {
+            char** clean_args=exec_input_redirect(args);
             if (clean_args == NULL) { exit(1); }
             execvp(clean_args[0], clean_args);
             free(clean_args);
