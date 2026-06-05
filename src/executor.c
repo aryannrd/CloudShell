@@ -8,6 +8,9 @@ int execute(char** args) {
     if (check_builtin(args)==1) {
         return execute_builtin(args);
     }
+    if (has_pipe(args)==1) {
+        return exec_pipe(args);
+    }
     pid_t p = fork();
     if (p==-1) {
         return -1;

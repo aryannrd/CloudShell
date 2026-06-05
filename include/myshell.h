@@ -11,4 +11,6 @@ int check_builtin(char** args);
 char** exec_output_redirect(char** args);
 char** exec_input_redirect(char** args);
 int has_redirect(char** args);
+int exec_pipe(char** args);
+int has_pipe(char** args);
 #endif //MOCK_SHELL_MYSHELL_H
