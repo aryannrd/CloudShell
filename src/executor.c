@@ -15,8 +15,8 @@ int has_background(char **args) {
     return 0;
 }
 
-extern int bg_pids[64];
-extern int bg_count = 0;
+int bg_pids[64];
+int bg_count = 0;
 
 int execute(char** args) {
     if (has_background(args)==1) {

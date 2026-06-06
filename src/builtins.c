@@ -21,6 +21,7 @@ int execute_builtin(char**args) {
     if (strcmp(args[0],"exit")==0) {
         exit(0);
     }
+    return -1;
 }
 
 int check_builtin(char** args) {
