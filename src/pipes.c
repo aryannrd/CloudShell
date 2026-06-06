@@ -10,77 +10,105 @@
 #include <string.h>
 #include <sys/errno.h>
 
-int exec_pipe(char** args) {
-    int breakpoint=0;
-    char **left_args = malloc(64 * sizeof(char *));
-    int argl=0;
-    int argr=0;
-    char **right_args = malloc(64 * sizeof(char *));
-    for (int i=0; args[i]!=NULL;) {
-        if (args[i][0]!='|') {
-            left_args[argl]=args[i];
-            argl+=1;
-            i++;
-        }
-        else {
-            breakpoint = i;
-            break;
-        }
-    }
-    left_args[argl] = NULL;
-    for (int i=(breakpoint+1);args[i]!=NULL;) {
-        right_args[argr]=args[i];
-        argr++;
-        i++;
-    }
-    right_args[argr] = NULL;
-    int fd[2];
-    pipe(fd);
-    pid_t left_fork=fork();
-    if (left_fork==-1) {
-        return -1;
-    }
-    if (left_fork==0) {
-        dup2(fd[1],STDOUT_FILENO);
-        close(fd[0]);
-        execvp(left_args[0], left_args);
-        fprintf(stderr, "%s command not found\n",left_args[0]);
-        free(left_args);
-        exit(127);
-    }
-    else {
-        pid_t right_fork=fork();
-        if (right_fork==-1) {
-            return -1;
-        }
-        if (right_fork==0) {
-            dup2(fd[0], STDIN_FILENO);
-            close(fd[1]);
-            execvp(right_args[0], right_args);
-            fprintf(stderr, "%s command not found\n",right_args[0]);
-            free(right_args);
-            exit(127);
-        }
-        else {
-            close(fd[0]);
-            close(fd[1]);
-            int left_status;
-            int right_status;
-            waitpid(left_fork,&left_status,0);
-            waitpid(right_fork,&right_status,0);
-            if (WIFEXITED(left_status)&& WIFEXITED(right_status)) {
-                return WEXITSTATUS(right_status);
+
+int exec_pipe(char** args, int count) {
+    int pipe_count=count;
+    int cmd_count=pipe_count+1;
+    int start=0;
+    int index=0;
+    char*** commands= malloc(cmd_count*sizeof(char**));
+
+    for (int i=0; ;i++) {
+        if (args[i] == NULL || strcmp(args[i], "|") == 0) {
+            int len = i - start;
+            commands[index] = malloc((len + 1) * sizeof(char*));
+
+            for (int j=0; j<len; j++) {
+                commands[index][j]=args[start+j];
+            }
+            commands[index][len]=NULL;
+            index++;
+            start=i+1;
+            if (args[i]==NULL) {
+                break;
             }
         }
+    }
+    pid_t pids[cmd_count];
+    int prev_fd=-1;
+
+    for (int i=0; i<cmd_count;i++) {
+        int fd[2];
+        if (i < cmd_count - 1) {
+            if (pipe(fd) == -1) {
+                perror("pipe");
+                return -1;
+            }
+        }
+
+        pid_t p=fork();
+        if (p==-1) {
+            perror("fork");
+            return -1;
+        }
+        if (p==0) {
+            if (prev_fd!=-1) {
+                dup2(prev_fd,STDIN_FILENO);
+            }
+            if (i<cmd_count-1) {
+                dup2(fd[1], STDOUT_FILENO);
+            }
+            if (prev_fd!=-1) {
+                close(prev_fd);
+            }
+            if (i<cmd_count-1) {
+                close(fd[0]);
+                close(fd[1]);
+            }
+            execvp(commands[i][0],commands[i]);
+            fprintf(stderr, "%s command not found\n",commands[i][0]);
+            free(commands[i]);
+            exit(127);
+
+        }
+        else {
+            pids[i]=p;
+            if (prev_fd!=-1) {
+                close(prev_fd);
+            }
+            if (i < cmd_count - 1) {
+                close(fd[1]);
+                prev_fd = fd[0];
+            }
+        }
+    }
+    int last_status;
+    for (int i = 0; i < cmd_count; i++) {
+        int status;
+        waitpid(pids[i], &status, 0);
+        free(commands[i]);
+        if (i == cmd_count - 1) {
+            last_status = status;
+        }
+    }
+    free(commands);
+    if (WIFEXITED(last_status)) {
+        return WEXITSTATUS(last_status);
     }
     return -1;
 }
 
+
+
 int has_pipe(char** args) {
+    int count=0;
     for (int i=0; args[i]!=NULL;i++) {
         if (args[i][0]=='|') {
-            return 1;
+            count+=1;
         }
+    }
+    if (count>=1) {
+        return count;
     }
     return 0;
 }

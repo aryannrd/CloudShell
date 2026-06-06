@@ -4,12 +4,14 @@
 #include <stdlib.h>
     #include "../include/myshell.h"
 #include <unistd.h>
+
 int execute(char** args) {
     if (check_builtin(args)==1) {
         return execute_builtin(args);
     }
-    if (has_pipe(args)==1) {
-        return exec_pipe(args);
+    int pipe_count = has_pipe(args);
+    if (pipe_count >= 1) {
+        return exec_pipe(args, pipe_count);
     }
     pid_t p = fork();
     if (p==-1) {
