@@ -5,6 +5,17 @@
 #include "../include/myshell.h"
 
 int main(void) {
+    for (int i = 0; i < bg_count; i++) {
+        int status;
+        pid_t result = waitpid(bg_pids[i], &status, WNOHANG);
+        if (result > 0) {
+            for (int j = i; j < bg_count - 1; j++) {
+                bg_pids[j] = bg_pids[j+1];
+            }
+            bg_count--;
+            i--;
+        }
+    }
     char buf[1024];
     char interface[1024];
     int last_status=0;

@@ -5,7 +5,37 @@
     #include "../include/myshell.h"
 #include <unistd.h>
 
+int has_background(char **args) {
+    for (int i=0; args[i]!=NULL; i++) {
+        if (args[i][0]=='&') {
+            args[i]=NULL;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+extern int bg_pids[64];
+extern int bg_count = 0;
+
 int execute(char** args) {
+    if (has_background(args)==1) {
+        pid_t p = fork();
+        if (p==-1) {
+            return -1;
+        }
+        if (p==0) {
+            execvp(args[0],args);
+            fprintf(stderr,"%s command not found.", args[0]);
+            free(args);
+            exit(127);
+        }
+        else {
+            bg_pids[bg_count] = p;
+            bg_count++;
+            return 0;
+        }
+    }
     if (check_builtin(args)==1) {
         return execute_builtin(args);
     }
@@ -48,3 +78,5 @@ int execute(char** args) {
     }
     return -1;
 }
+
+

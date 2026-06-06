@@ -13,4 +13,6 @@ char** exec_input_redirect(char** args);
 int has_redirect(char** args);
 int exec_pipe(char** args, int count);
 int has_pipe(char** args);
+extern int bg_pids[64];
+extern int bg_count;
 #endif //MOCK_SHELL_MYSHELL_H

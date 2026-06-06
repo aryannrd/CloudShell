@@ -1,3 +1,0 @@
-new.txt
-old.txt
-out.txt
