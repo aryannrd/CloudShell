@@ -9,7 +9,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <sys/errno.h>
-
+#include "../include/myshell.h"
 
 int exec_pipe(char** args, int count) {
     int pipe_count=count;
@@ -64,6 +64,25 @@ int exec_pipe(char** args, int count) {
             if (i<cmd_count-1) {
                 close(fd[0]);
                 close(fd[1]);
+            }
+            int redirect_condition= has_redirect(commands[i]);
+            if (i == cmd_count - 1 && redirect_condition) {
+                if (redirect_condition==1) {
+                    char** clean_args=exec_output_redirect(commands[i]);
+                    if (clean_args == NULL) { exit(1); }
+                    execvp(clean_args[0], clean_args);
+                    free(clean_args);
+                    fprintf(stderr, "%s command not found\n",args[0]);
+                    exit(127);
+                }
+                else if (redirect_condition==2) {
+                    char** clean_args=exec_input_redirect(commands[i]);
+                    if (clean_args == NULL) { exit(1); }
+                    execvp(clean_args[0], clean_args);
+                    free(clean_args);
+                    fprintf(stderr, "%s command not found\n",args[0]);
+                    exit(127);
+                }
             }
             execvp(commands[i][0],commands[i]);
             fprintf(stderr, "%s command not found\n",commands[i][0]);
