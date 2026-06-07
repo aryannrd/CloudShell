@@ -4,14 +4,17 @@
 #include <unistd.h>
 #include <signal.h>
 #include "../include/myshell.h"
+#include "termios.h"
 char buf[1024];
+char interface[1024];
 
 int main(void) {
+    enable_raw();
+    atexit(disable_raw);
     signal(SIGINT, SIG_IGN);
     signal(SIGCHLD, sigchild_handler);
-    char interface[1024];
     int last_status=0;
-
+    
     while (1) {
         for (int i = 0; i < job_count; i++) {
             int status;
@@ -34,15 +37,15 @@ int main(void) {
             fflush(stdout);
 
         }
-        if (fgets(buf, sizeof(buf), stdin) == NULL) {
-            break;
-        }
-        buf[strcspn(buf, "\n")]='\0';
+        read_line();
+        printf("\n");
+        fflush(stdout);
         if (strcmp(buf,"") == 0) {
             continue;
         }
+        history[history_count] = strdup(buf);
+        history_count++;
         char** args= parse(buf);
-
         if (args[0]==NULL) {
             continue;
         }

@@ -119,10 +119,6 @@ int exec_pipe(char** args, int count) {
     if (WIFEXITED(last_status)) {
         return WEXITSTATUS(last_status);
     }
-    for (int i = 0; i < cmd_count; i++) {
-        free(commands[i]);
-    }
-    free(commands);
     return -1;
 }
 
