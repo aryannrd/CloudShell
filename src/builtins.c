@@ -21,6 +21,12 @@ int execute_builtin(char**args) {
     if (strcmp(args[0],"exit")==0) {
         exit(0);
     }
+    if (strcmp(args[0],"jobs")==0) {
+        for (int i=0; i<job_count;i++) {
+            printf("[%d] %d %s  %s \n",i+1, jobs[i].pid, jobs[i].status == 0 ? "running" : "done", jobs[i].command);
+        }
+        return 0;
+    }
     return -1;
 }
 
@@ -29,6 +35,9 @@ int check_builtin(char** args) {
         return 1;
     }
     if (strcmp(args[0],"exit")==0) {
+        return 1;
+    }
+    if (strcmp(args[0],"jobs")==0){
         return 1;
     }
     return 0;

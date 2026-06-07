@@ -4,6 +4,7 @@
 #include <stdlib.h>
     #include "../include/myshell.h"
 #include <unistd.h>
+#include <_string.h>
 
 int has_background(char **args) {
     for (int i=0; args[i]!=NULL; i++) {
@@ -15,10 +16,19 @@ int has_background(char **args) {
     return 0;
 }
 
-int bg_pids[64];
-int bg_count = 0;
 
 int execute(char** args) {
+    char new_buf[1024];
+    new_buf[0]='\0';
+    for (int i=0;args[i]!=NULL;i++) {
+        if (args[i+1]!=NULL) {
+            strcat(new_buf," ");
+        }
+        if (args[i][0]=='&') {
+            continue;
+        }
+        strcat(new_buf,args[i]);
+    }
     if (has_background(args)==1) {
         pid_t p = fork();
         if (p==-1) {
@@ -31,8 +41,9 @@ int execute(char** args) {
             exit(127);
         }
         else {
-            bg_pids[bg_count] = p;
-            bg_count++;
+            jobs[job_count].pid = p;
+            jobs[job_count].command = strdup(new_buf);
+            job_count++;
             return 0;
         }
     }

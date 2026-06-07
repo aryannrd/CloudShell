@@ -11,3 +11,6 @@
 #include "../include/myshell.h"
 
 
+job_t jobs[64];
+int job_count = 0;
+

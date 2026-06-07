@@ -3,20 +3,21 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "../include/myshell.h"
+char buf[1024];
 
 int main(void) {
-    for (int i = 0; i < bg_count; i++) {
+    for (int i = 0; i < job_count; i++) {
         int status;
-        pid_t result = waitpid(bg_pids[i], &status, WNOHANG);
+        pid_t result = waitpid(jobs[i].pid, &status, WNOHANG);
         if (result > 0) {
-            for (int j = i; j < bg_count - 1; j++) {
-                bg_pids[j] = bg_pids[j+1];
+            jobs[i].status=1;
+            for (int j = i; j < job_count - 1; j++) {
+                jobs[j] = jobs[j+1];
             }
-            bg_count--;
+            job_count--;
             i--;
         }
     }
-    char buf[1024];
     char interface[1024];
     int last_status=0;
     while (1) {
