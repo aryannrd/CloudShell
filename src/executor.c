@@ -35,6 +35,7 @@ int execute(char** args) {
             return -1;
         }
         if (p==0) {
+            signal(SIGINT, SIG_DFL);
             execvp(args[0],args);
             fprintf(stderr,"%s command not found.", args[0]);
             free(args);
@@ -63,6 +64,7 @@ int execute(char** args) {
         if (redir==1) {
             char** clean_args=exec_output_redirect(args);
             if (clean_args == NULL) { exit(1); }
+            signal(SIGINT, SIG_DFL);
             execvp(clean_args[0], clean_args);
             free(clean_args);
             fprintf(stderr, "%s command not found\n",args[0]);
@@ -71,11 +73,13 @@ int execute(char** args) {
         else if (redir==2) {
             char** clean_args=exec_input_redirect(args);
             if (clean_args == NULL) { exit(1); }
+            signal(SIGINT, SIG_DFL);
             execvp(clean_args[0], clean_args);
             free(clean_args);
             fprintf(stderr, "%s command not found\n",args[0]);
             exit(127);
         }
+        signal(SIGINT, SIG_DFL);
         execvp(args[0],args);
         fprintf(stderr, "%s command not found\n",args[0]);
         exit(127);

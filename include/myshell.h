@@ -23,4 +23,6 @@ typedef struct {
 
 extern job_t jobs[64];
 extern int job_count;
+
+void sigchild_handler(int sig);
 #endif //MOCK_SHELL_MYSHELL_H

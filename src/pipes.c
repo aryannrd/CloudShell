@@ -70,6 +70,7 @@ int exec_pipe(char** args, int count) {
                 if (redirect_condition==1) {
                     char** clean_args=exec_output_redirect(commands[i]);
                     if (clean_args == NULL) { exit(1); }
+                    signal(SIGINT,SIG_DFL);
                     execvp(clean_args[0], clean_args);
                     free(clean_args);
                     fprintf(stderr, "%s command not found\n",args[0]);
@@ -78,12 +79,14 @@ int exec_pipe(char** args, int count) {
                 else if (redirect_condition==2) {
                     char** clean_args=exec_input_redirect(commands[i]);
                     if (clean_args == NULL) { exit(1); }
+                    signal(SIGINT,SIG_DFL);
                     execvp(clean_args[0], clean_args);
                     free(clean_args);
                     fprintf(stderr, "%s command not found\n",args[0]);
                     exit(127);
                 }
             }
+            signal(SIGINT,SIG_DFL);
             execvp(commands[i][0],commands[i]);
             fprintf(stderr, "%s command not found\n",commands[i][0]);
             free(commands[i]);
@@ -105,15 +108,21 @@ int exec_pipe(char** args, int count) {
     for (int i = 0; i < cmd_count; i++) {
         int status;
         waitpid(pids[i], &status, 0);
-        free(commands[i]);
         if (i == cmd_count - 1) {
             last_status = status;
         }
+    }
+    for (int i = 0; i < cmd_count; i++) {
+        free(commands[i]);
     }
     free(commands);
     if (WIFEXITED(last_status)) {
         return WEXITSTATUS(last_status);
     }
+    for (int i = 0; i < cmd_count; i++) {
+        free(commands[i]);
+    }
+    free(commands);
     return -1;
 }
 

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 4.2)
 project(mock_shell C)
 
 set(CMAKE_C_STANDARD 11)
-
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -g")
 add_executable(mock_shell src/main.c
         include/myshell.h
         src/parser.c
@@ -13,5 +13,4 @@ add_executable(mock_shell src/main.c
         src/jobs.c
         src/signals.c
         src/util.c
-        tests/hhh.cpp
-        tests/hhh.h)
+       )
