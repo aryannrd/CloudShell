@@ -18,15 +18,12 @@ char *history[100];
 int history_count = 0;
 
 void enable_raw() {
-    fprintf(stderr, "enabling raw mode\n");
     tcgetattr(STDIN_FILENO,&orig);
     raw = orig;
     raw.c_lflag &= ~(ECHO | ICANON);
     tcsetattr(STDIN_FILENO,TCSAFLUSH, &raw);
     struct termios check;
     tcgetattr(STDIN_FILENO, &check);
-    fprintf(stderr, "ECHO set: %d\n", (check.c_lflag & ECHO) != 0);
-    fprintf(stderr, "ICANON set: %d\n", (check.c_lflag & ICANON) != 0);
 }
 
 void disable_raw() {
@@ -45,6 +42,12 @@ void read_line() {
             write(STDOUT_FILENO, "\n", 1);
             buf[counter] = '\0';
             return;
+        }
+        if (c == 26) {
+            counter = 0;
+            buf[0] = '\0';
+            write(STDOUT_FILENO, "\nmyshell> ", 10);
+            continue;
         }
         if (c == 127 || c == 8) {
             if (counter > 0) {
@@ -83,16 +86,13 @@ void read_line() {
                     history_index = history_count;
                     buf[0] = '\0';
                 }
-
                 counter = strlen(buf);
-
                 write(STDOUT_FILENO, "\r\033[K", 4);
                 write(STDOUT_FILENO, "myshell> ", 9);
                 write(STDOUT_FILENO, interface, strlen(interface));
                 write(STDOUT_FILENO, "> ", 2);
                 write(STDOUT_FILENO, buf, counter);
             }
-
             continue;
         }
 

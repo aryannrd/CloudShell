@@ -23,13 +23,16 @@ extern char buf[1024];
 
 typedef struct {
     pid_t pid;
+    pid_t pgid;
     char *command;
     int status;
+    int stopped;
 } job_t;
 extern job_t jobs[64];
 extern int job_count;
 
 void sigchild_handler(int sig);
+volatile sig_atomic_t sigchild;
 
 extern struct termios raw;
 void enable_raw();

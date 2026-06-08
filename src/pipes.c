@@ -52,11 +52,13 @@ int exec_pipe(char** args, int count) {
             return -1;
         }
         if (p==0) {
+            setpgid(0,0);
             if (prev_fd!=-1) {
                 dup2(prev_fd,STDIN_FILENO);
             }
             if (i<cmd_count-1) {
                 dup2(fd[1], STDOUT_FILENO);
+
             }
             if (prev_fd!=-1) {
                 close(prev_fd);
@@ -71,6 +73,8 @@ int exec_pipe(char** args, int count) {
                     char** clean_args=exec_output_redirect(commands[i]);
                     if (clean_args == NULL) { exit(1); }
                     signal(SIGINT,SIG_DFL);
+                    signal(SIGTSTP, SIG_DFL);
+                    setpgid(0, 0);
                     execvp(clean_args[0], clean_args);
                     free(clean_args);
                     fprintf(stderr, "%s command not found\n",args[0]);
@@ -80,6 +84,8 @@ int exec_pipe(char** args, int count) {
                     char** clean_args=exec_input_redirect(commands[i]);
                     if (clean_args == NULL) { exit(1); }
                     signal(SIGINT,SIG_DFL);
+                    signal(SIGTSTP, SIG_DFL);
+                    setpgid(0, 0);
                     execvp(clean_args[0], clean_args);
                     free(clean_args);
                     fprintf(stderr, "%s command not found\n",args[0]);
@@ -87,6 +93,8 @@ int exec_pipe(char** args, int count) {
                 }
             }
             signal(SIGINT,SIG_DFL);
+            signal(SIGTSTP, SIG_DFL);
+            setpgid(0, 0);
             execvp(commands[i][0],commands[i]);
             fprintf(stderr, "%s command not found\n",commands[i][0]);
             free(commands[i]);
@@ -95,6 +103,11 @@ int exec_pipe(char** args, int count) {
         }
         else {
             pids[i]=p;
+            if (i == 0) {
+                setpgid(p, p);
+            } else {
+                setpgid(p, pids[0]);
+            }
             if (prev_fd!=-1) {
                 close(prev_fd);
             }
@@ -107,11 +120,23 @@ int exec_pipe(char** args, int count) {
     int last_status;
     for (int i = 0; i < cmd_count; i++) {
         int status;
-        waitpid(pids[i], &status, 0);
+        waitpid(pids[i], &status, WUNTRACED);
         if (i == cmd_count - 1) {
             last_status = status;
         }
+        if (WIFSTOPPED(status)) {
+            if (i== cmd_count-1) {
+                jobs[job_count].pid= pids[0];
+                jobs[job_count].pgid = pids[0];
+                jobs[job_count].command = strdup(buf);
+                jobs[job_count].stopped = 1;
+                jobs[job_count].status = 0;
+                job_count++;
+                tcsetpgrp(STDIN_FILENO, getpgrp());
+            }
+        }
     }
+
     for (int i = 0; i < cmd_count; i++) {
         free(commands[i]);
     }
