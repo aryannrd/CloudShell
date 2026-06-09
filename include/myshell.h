@@ -5,6 +5,10 @@
 #ifndef MOCK_SHELL_MYSHELL_H
 #define MOCK_SHELL_MYSHELL_H
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <signal.h>
+#include <unistd.h>
 extern char interface[1024];
 int execute(char** args);
 
@@ -32,7 +36,7 @@ extern job_t jobs[64];
 extern int job_count;
 
 void sigchild_handler(int sig);
-volatile sig_atomic_t sigchild;
+extern volatile sig_atomic_t sigchild;
 
 extern struct termios raw;
 void enable_raw();

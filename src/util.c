@@ -10,6 +10,10 @@
 #include <sys/errno.h>
 #include "../include/myshell.h"
 #include <termios.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <signal.h>
+#include <unistd.h>
 
 struct termios orig;
 struct termios raw;

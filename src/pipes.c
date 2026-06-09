@@ -10,6 +10,9 @@
 #include <string.h>
 #include <sys/errno.h>
 #include "../include/myshell.h"
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <signal.h>
 
 int exec_pipe(char** args, int count) {
     int pipe_count=count;

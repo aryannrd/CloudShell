@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <signal.h>
 #include "../include/myshell.h"
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "termios.h"
 char buf[1024];
 char interface[1024];

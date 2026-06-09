@@ -6,6 +6,10 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <signal.h>
+#include <unistd.h>
 
 char** parse(char* input) {
     char **args = malloc(64 * sizeof(char *));

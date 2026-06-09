@@ -5,6 +5,8 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include "../include/myshell.h"
+#include <sys/types.h>
+
 
 int has_background(char **args) {
     for (int i=0; args[i]!=NULL; i++) {

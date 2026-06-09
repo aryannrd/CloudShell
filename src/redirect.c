@@ -8,6 +8,10 @@
 #include <fcntl.h>
 #include <string.h>
 #include <sys/errno.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <signal.h>
+#include <unistd.h>
 
 char** exec_output_redirect(char** args) {
     char **new_args = malloc(64 * sizeof(char *));
