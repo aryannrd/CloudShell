@@ -9,6 +9,8 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <unistd.h>
+#include <time.h>
+
 extern char interface[1024];
 int execute(char** args);
 
@@ -32,6 +34,7 @@ typedef struct {
     int status;
     int stopped;
 } job_t;
+
 extern job_t jobs[64];
 extern int job_count;
 
@@ -46,4 +49,13 @@ void read_line();
 extern char *history[100];
 extern int history_count;
 
+typedef struct {
+    time_t timestamp;
+    char cwd[1024];
+    char command[1024];
+    long duration_ms;
+    int exit_code;
+} telemetry_t;
+
+void log_telemetry(telemetry_t *t);
 #endif //MOCK_SHELL_MYSHELL_H

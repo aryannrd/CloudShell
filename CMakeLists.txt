@@ -10,7 +10,9 @@ add_executable(mock_shell src/main.c
         src/builtins.c
         src/pipes.c
         src/redirect.c
-        src/jobs.c
         src/signals.c
         src/util.c
-       )
+        src/telemetry.c
+        src/telemetry.c
+        src/telemetry.c
+)

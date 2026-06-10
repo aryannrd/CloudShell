@@ -10,7 +10,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <unistd.h>
-
+char * com;
 char** parse(char* input) {
     char **args = malloc(64 * sizeof(char *));
     int argc=0;

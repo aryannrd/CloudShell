@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -9,6 +10,8 @@
 #include "termios.h"
 char buf[1024];
 char interface[1024];
+job_t jobs[64];
+int job_count = 0;
 
 int main(void) {
     enable_raw();

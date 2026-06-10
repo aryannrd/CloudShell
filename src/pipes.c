@@ -25,7 +25,6 @@ int exec_pipe(char** args, int count) {
         if (args[i] == NULL || strcmp(args[i], "|") == 0) {
             int len = i - start;
             commands[index] = malloc((len + 1) * sizeof(char*));
-
             for (int j=0; j<len; j++) {
                 commands[index][j]=args[start+j];
             }
@@ -102,7 +101,6 @@ int exec_pipe(char** args, int count) {
             fprintf(stderr, "%s command not found\n",commands[i][0]);
             free(commands[i]);
             exit(127);
-
         }
         else {
             pids[i]=p;
