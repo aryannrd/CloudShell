@@ -16,7 +16,7 @@ void log_telemetry(telemetry_t *t) {
     char path[1024];
     snprintf(path, sizeof(path), "%s/.myshell_history.jsonl", getenv("HOME"));
     fprintf(stderr, "logging to: %s\n", path);
-    FILE * fd= fopen(path,"a");
+    FILE* fd= fopen(path,"a");
     if (fd == NULL) {
         perror(path);
         return;
