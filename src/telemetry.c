@@ -22,6 +22,6 @@ void log_telemetry(telemetry_t *t) {
         return;
     }
     t->timestamp=time(NULL);
-    fprintf(fd,"{\"timestamp\": %ld, \"cwd\": \"%s\", \"cmd\": \"%s\", \"exit\": %d} \n ",t->timestamp,t->cwd, t->command, t->exit_code);
+    fprintf(fd,"{\"timestamp\": %ld, \"cwd\": \"%s\", \"cmd\": \"%s\", \"duration_ms\": %ld \"exit\": %d} \n ",t->timestamp,t->cwd, t->command, t->duration_ms, t->exit_code);
     fclose(fd);
 }
