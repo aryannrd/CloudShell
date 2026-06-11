@@ -13,6 +13,6 @@ add_executable(mock_shell src/main.c
         src/signals.c
         src/util.c
         src/telemetry.c
-        src/telemetry.c
-        src/telemetry.c
 )
+find_package(CURL REQUIRED)
+target_link_libraries(mock_shell CURL::libcurl)
