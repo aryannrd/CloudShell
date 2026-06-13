@@ -58,4 +58,5 @@ typedef struct {
 } telemetry_t;
 
 void log_telemetry(telemetry_t *t);
+void get_prediction(char* cmd);
 #endif //MOCK_SHELL_MYSHELL_H

@@ -61,6 +61,7 @@ int main(void) {
             continue;
         }
         last_status=execute(args);
+        get_prediction(buf);
         free(args);
         if (last_status!=0) {
             printf("exit status: %d\n", last_status);

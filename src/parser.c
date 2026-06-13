@@ -45,7 +45,7 @@ char** parse(char* input) {
                     j++;
                 }
                 if (path_count == 0) {
-                    args[argc] = &input[i]; // point to the '$'
+                    args[argc] = &input[i];
                     argc++;
                     is_token = 1;
                 }
