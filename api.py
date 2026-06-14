@@ -24,7 +24,7 @@ def compute_freq(logs):
     for entry in logs:
         cmd = entry.get("cmd")
         if cmd:
-            base_cmd = cmd if cmd.strip() else ""
+            base_cmd = cmd.strip().split(" ")[0]
             if base_cmd:
                 freq[base_cmd] = freq.get(base_cmd, 0) + 1
     return freq
@@ -56,14 +56,16 @@ def compute_stat():
 
     total = len(logs)
     freq = compute_freq(logs)
-    top_commands = sorted( [{"cmd": k, "count": v} for k, v in freq.items()],  key=lambda x: x["count"], reverse=True )[:5]
+    top_commands = sorted([{"cmd": k, "count": v} for k, v in freq.items()], key=lambda x: x["count"], reverse=True)[:5]
     return {
         "total_commands": total,
         "top_commands": top_commands
     }
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
 @app.get("/stats")
 def stats():
     return compute_stat()
@@ -74,7 +76,7 @@ def log_command(entry: TelemetryE):
     log_data = entry.model_dump()
     try:
         with open(path, "a", encoding="utf-8") as f:
-            f.write(json.dumps(log_data) + "\n")
+            f.write(json.dumps(log_data, ensure_ascii=True) + "\n")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to write log: {str(e)}")
 
@@ -84,13 +86,25 @@ def log_command(entry: TelemetryE):
 def predict_next_command(current_context: TelemetryE):
     stats_data = compute_stat()
     top_commands = stats_data.get("top_commands", [])
-    if (top_commands[0]["cmd"]=="git add"):
-        prediction = "git commit -m \"\" "
+
+    if not top_commands:
+        return {
+            "current_cwd": current_context.cwd,
+            "predicted_next_cmd": "echo 'no history'",
+            "confidence": "low"
+        }
+
+    cwd = current_context.cwd
+
+    if "git" in cwd:
+        prediction = "git status"
+    elif top_commands[0]["cmd"] == "cd":
+        prediction = "ls"
     else:
-        prediction = top_commands[0]["cmd"] if top_commands else "No history data to predict from"
+        prediction = top_commands[0]["cmd"]
 
     return {
-        "current_cwd": current_context.cwd,
+        "current_cwd": cwd,
         "predicted_next_cmd": prediction,
-        "confidence": "high" if top_commands else "low"
+        "confidence": "medium"
     }
