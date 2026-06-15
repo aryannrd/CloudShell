@@ -20,6 +20,8 @@ struct Memory {
     size_t size;
 };
 
+
+
 size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdata) {
     size_t total = size * nmemb;
     struct Memory *mem = (struct Memory *)userdata;
@@ -39,7 +41,6 @@ static size_t discard_callback(char *ptr, size_t size, size_t nmemb, void *userd
 void send_telemetry(telemetry_t *t) {
     CURL *curl = curl_easy_init();
     if (!curl) return;
-
     char escaped_cmd[1024];
     int j = 0;
     for (int i = 0; t->command[i] && j < 1022; i++) {
@@ -54,7 +55,7 @@ void send_telemetry(telemetry_t *t) {
         t->timestamp, t->cwd, escaped_cmd, t->duration_ms, t->exit_code);
 
     struct curl_slist *headers = curl_slist_append(NULL, "Content-Type: application/json");
-    curl_easy_setopt(curl, CURLOPT_URL, "http://host.docker.internal:8000/log");
+    curl_easy_setopt(curl, CURLOPT_URL, "127.0.0.1:8000/log");
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json);
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, discard_callback);
@@ -62,7 +63,6 @@ void send_telemetry(telemetry_t *t) {
     CURLcode res = curl_easy_perform(curl);
     if (res != CURLE_OK)
         fprintf(stderr, "curl failed: %s\n", curl_easy_strerror(res));
-
     curl_slist_free_all(headers);
     curl_easy_cleanup(curl);
 }
@@ -78,7 +78,6 @@ void get_prediction(char* cmd) {
     if (!curl) {
         return;
     }
-
     struct Memory response;
     response.data = malloc(1);
     response.size = 0;
@@ -92,10 +91,9 @@ void get_prediction(char* cmd) {
         escaped[j++] = cmd[i];
     }
     escaped[j] = '\0';
-
     snprintf(json, sizeof(json), "{\"cmd\": \"%s\", \"timestamp\": 0, \"exit\": 0, \"cwd\": \"/\", \"duration_ms\": 0}", escaped);
 
-    curl_easy_setopt(curl, CURLOPT_URL, "http://host.docker.internal:8000/predict");
+    curl_easy_setopt(curl, CURLOPT_URL, "http://127.0.0.1:8000/predict");
     curl_easy_setopt(curl,CURLOPT_POSTFIELDS,json);
     struct curl_slist *headers = curl_slist_append(NULL, "Content-type: application/json");
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER,headers);
@@ -112,7 +110,6 @@ void get_prediction(char* cmd) {
     curl_easy_cleanup(curl);
 
     cJSON *root = cJSON_Parse(response.data);
-
     if (!root) {
         fprintf(stderr, "Invalid JSON response\n");
         free(response.data);

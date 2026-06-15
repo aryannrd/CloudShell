@@ -26,6 +26,26 @@ def init_db():
     con.commit()
     con.close()
 
+def get_transition():
+    transitions={}
+    db_path = os.path.join(os.environ.get("HOME", "."), ".myshell_data.db")
+    con = sqlite3.connect(db_path)
+    cur= con.cursor()
+    cur.execute(""" SELECT cmd
+                    FROM telemetry
+                    ORDER BY timestamp ASC;
+                """)
+    rows = cur.fetchall()
+    for i in range(len(rows)-1):
+        cmd_a = rows[i][0]
+        cmd_b = rows[i+1][0]
+        if cmd_a not in transitions:
+            transitions[cmd_a] = {}
+        if cmd_b not in transitions[cmd_a]:
+            transitions[cmd_a][cmd_b] = 0
+        transitions[cmd_a][cmd_b] += 1
+    return transitions
+
 def stats_query():
     db_path = os.path.join(os.environ.get("HOME", "."), ".myshell_data.db")
     con = sqlite3.connect(db_path)
@@ -74,13 +94,14 @@ def stats():
 
 @app.post("/predict")
 def predict_next_command(current_context: TelemetryE):
-    top_commands = stats_query()
-    if top_commands:
-        prediction = top_commands[0]["cmd"]
+    data = get_transition()
+    print(data)
+    next_cmds = data.get(current_context.cmd, {})
+    if next_cmds:
+        prediction = max(next_cmds, key=next_cmds.get)
     else:
         prediction = "ls"
     return {
         "current_cwd": current_context.cwd,
-        "predicted_next_cmd": prediction,
-        "confidence": "high" if top_commands else "low"
+        "predicted_next_cmd": prediction
     }
