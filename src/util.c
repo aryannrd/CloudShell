@@ -40,21 +40,24 @@ void read_line() {
     char c;
     int history_index = history_count;
     buf[0] = '\0';
+
+    // Print prompt once at the start
+    write(STDOUT_FILENO, "myshell:", 8);
+    write(STDOUT_FILENO, interface, strlen(interface));
+    write(STDOUT_FILENO, "> ", 2);
+
     while (1) {
         if (read(STDIN_FILENO, &c, 1) != 1)
             continue;
+
         if (c == '\n' || c == '\r') {
             write(STDOUT_FILENO, "\n", 1);
             buf[counter] = '\0';
+            if (counter > 0 && history_count < 100)
+                history[history_count++] = strdup(buf);
             return;
         }
-        if (c == 26) {
-            counter = 0;
-            cursor = 0;
-            buf[0] = '\0';
-            write(STDOUT_FILENO, "\nmyshell> ", 10);
-            continue;
-        }
+
         if (c == 127 || c == 8) {
             if (cursor > 0) {
                 memmove(&buf[cursor-1], &buf[cursor], counter - cursor);
@@ -64,7 +67,6 @@ void read_line() {
                 write(STDOUT_FILENO, "\b", 1);
                 write(STDOUT_FILENO, &buf[cursor], counter - cursor);
                 write(STDOUT_FILENO, " ", 1);
-                // move cursor back to correct position
                 int move_back = counter - cursor + 1;
                 for (int i = 0; i < move_back; i++)
                     write(STDOUT_FILENO, "\033[D", 3);
@@ -74,26 +76,28 @@ void read_line() {
 
         if (c == 27) {
             char d, e;
-            if (read(STDIN_FILENO, &d, 1) != 1)
-                continue;
-            if (read(STDIN_FILENO, &e, 1) != 1)
-                continue;
+            if (read(STDIN_FILENO, &d, 1) != 1) continue;
+            if (read(STDIN_FILENO, &e, 1) != 1) continue;
+
+            // helper macro to redraw full line
+            #define REDRAW() do { \
+                write(STDOUT_FILENO, "\r\033[K", 4); \
+                write(STDOUT_FILENO, "myshell:", 8); \
+                write(STDOUT_FILENO, interface, strlen(interface)); \
+                write(STDOUT_FILENO, "> ", 2); \
+                write(STDOUT_FILENO, buf, counter); \
+            } while(0)
+
             if (d == '[' && e == 'A') {
-                // up arrow
                 if (history_count > 0 && history_index > 0)
                     history_index--;
-                if (history[history_index]) {
+                if (history_index < history_count && history[history_index]) {
                     strcpy(buf, history[history_index]);
                     counter = strlen(buf);
                     cursor = counter;
-                    write(STDOUT_FILENO, "\r\033[K", 4);
-                    write(STDOUT_FILENO, "myshell:", 8);
-                    write(STDOUT_FILENO, interface, strlen(interface));
-                    write(STDOUT_FILENO, "> ", 2);
-                    write(STDOUT_FILENO, buf, counter);
+                    REDRAW();
                 }
             } else if (d == '[' && e == 'B') {
-                // down arrow
                 if (history_index < history_count - 1) {
                     history_index++;
                     strcpy(buf, history[history_index]);
@@ -103,19 +107,13 @@ void read_line() {
                 }
                 counter = strlen(buf);
                 cursor = counter;
-                write(STDOUT_FILENO, "\r\033[K", 4);
-                write(STDOUT_FILENO, "myshell:", 8);
-                write(STDOUT_FILENO, interface, strlen(interface));
-                write(STDOUT_FILENO, "> ", 2);
-                write(STDOUT_FILENO, buf, counter);
+                REDRAW();
             } else if (d == '[' && e == 'C') {
-                // right arrow
                 if (cursor < counter) {
                     cursor++;
                     write(STDOUT_FILENO, "\033[C", 3);
                 }
             } else if (d == '[' && e == 'D') {
-                // left arrow
                 if (cursor > 0) {
                     cursor--;
                     write(STDOUT_FILENO, "\033[D", 3);
@@ -125,6 +123,7 @@ void read_line() {
         }
 
         if (c >= 32 && c < 127) {
+            if (counter >= 1023) continue;
             memmove(&buf[cursor+1], &buf[cursor], counter - cursor);
             buf[cursor] = c;
             counter++;

@@ -14,5 +14,11 @@ add_executable(mock_shell src/main.c
         src/util.c
         src/telemetry.c
 )
+list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew")
 find_package(CURL REQUIRED)
 target_link_libraries(mock_shell CURL::libcurl)
+find_package(cjson REQUIRED)
+target_link_libraries(mock_shell
+        CURL::libcurl
+        cjson
+)

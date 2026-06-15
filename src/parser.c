@@ -11,68 +11,55 @@
 #include <signal.h>
 #include <unistd.h>
 char * com;
-char** parse(char* input) {
+char **parse(char *input) {
     char **args = malloc(64 * sizeof(char *));
-    int argc=0;
-    int is_token=0;
-    int is_quotes=0;
-    int is_path=0;
-    size_t len= strlen(input);
+    int argc = 0;
+    char *token_start = NULL;
+    int is_quotes = 0;
+    size_t len = strlen(input);
     char pathvariable[1024];
-    int path_count=0;
-    for (int i=0; i<=len; i++) {
-        if (input[i]=='\\' && input[i + 1] != '\0'){
-            input[i]='\0';
+    int path_count = 0;
+
+    for (int i = 0; i <= (int)len; i++) {
+        if (input[i] == '\\' && input[i + 1] != '\0') {
+            input[i] = '\0';
             i++;
         }
-        int is_boundary = (input[i] == '\0' || isspace((unsigned char)input[i]));
+        int is_boundary = (input[i] == '\0' || (isspace((unsigned char)input[i]) && !is_quotes));
+
         if (input[i] == '"') {
             input[i] = '\0';
-            if (is_quotes == 0) {
+            if (!is_quotes) {
                 is_quotes = 1;
+                if (!token_start) token_start = &input[i + 1];
             } else {
                 is_quotes = 0;
-                is_token = 0;
+                // end of quoted token — will be picked up at next boundary
             }
             continue;
         }
-        if (!is_boundary && is_token==0){
-            if (input[i]=='$') {
-                path_count=0;
-               int j=i+1;
-                while (isalnum(input[j]) || input[j]=='_') {
-                    pathvariable[path_count++] = input[j];
-                    j++;
-                }
+
+        if (!is_boundary && !token_start) {
+            if (input[i] == '$') {
+                path_count = 0;
+                int j = i + 1;
+                while (isalnum(input[j]) || input[j] == '_')
+                    pathvariable[path_count++] = input[j++];
                 if (path_count == 0) {
-                    args[argc] = &input[i];
-                    argc++;
-                    is_token = 1;
+                    token_start = &input[i];
+                } else {
+                    pathvariable[path_count] = '\0';
+                    char *val = getenv(pathvariable);
+                    args[argc++] = strdup(val ? val : "");
+                    i = j - 1;
                 }
-                else {
-                    pathvariable[path_count]='\0';
-                    char* val= getenv(pathvariable);
-                    if (val==NULL) {
-                        val="";
-                    }
-                    is_token=0;
-                    args[argc] = strdup(val);
-                    argc++;
-                    i=j-1;
-                }
+            } else {
+                token_start = &input[i];
             }
-            else {
-                args[argc]=&input[i];
-                argc++;
-                is_token=1;
-            }
-        }
-        else if (is_boundary && is_token==1) {
-            if (is_quotes==1) {
-                continue;
-            }
+        } else if (is_boundary && token_start) {
             input[i] = '\0';
-            is_token=0;
+            args[argc++] = strdup(token_start);
+            token_start = NULL;
         }
     }
     args[argc] = NULL;

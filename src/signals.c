@@ -11,7 +11,6 @@
 #include "../include/myshell.h"
 volatile sig_atomic_t sigchild = 0;
 void sigchild_handler(int sig) {
-    waitpid(-1,NULL, WNOHANG);
     sigchild=1;
 }
 

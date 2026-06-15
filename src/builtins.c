@@ -53,11 +53,14 @@ int execute_builtin(char**args) {
         kill(-jobs[job_idx].pgid, SIGCONT);
         return 0;
     }
-    char* target_path = args[1];
-    if (target_path == NULL) {
-        target_path = getenv("HOME");
-    }
     if (strcmp(args[0],"cd")==0) {
+        char* target_path = args[1];
+        if (target_path == NULL) {
+            target_path = getenv("HOME");
+            if (target_path == NULL) {
+                target_path = "/root";
+            }
+        }
         if (chdir(target_path)==-1) {
             fprintf(stderr,"%s was not found\n", target_path);
             return -1;
