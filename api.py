@@ -1,14 +1,21 @@
 import sqlite3
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, WebSocket
 from pydantic import BaseModel
-import json
 import os
-import sys
+import subprocess
 
+def execute_shell(command):
+    result = subprocess.run(
+        ["./myshell"],
+        input=command + "\n",
+        text=True,
+        capture_output=True
+    )
+    return result.stdout
 class TelemetryE(BaseModel):
     timestamp: int
     cmd: str
-    exit: int
+    exit_code: int
     cwd: str
     duration_ms: int
 
@@ -81,7 +88,7 @@ def log_command(entry: TelemetryE):
                     log_data["timestamp"],
                     log_data["cmd"],
                     log_data["cwd"],
-                    log_data["exit"],
+                    log_data["exit_code"],
                     log_data["duration_ms"]
                 ))
     con.commit()
@@ -105,3 +112,25 @@ def predict_next_command(current_context: TelemetryE):
         "current_cwd": current_context.cwd,
         "predicted_next_cmd": prediction
     }
+
+@app.websocket("/terminal")
+async def terminal(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        command = await websocket.recieve_text()
+        telemetry = TelemetryE(
+            timestamp=0,
+            cmd=command,
+            exit_code=0,
+            cwd="~",
+            duration_ms=0
+        )
+        log_command(telemetry)
+        prediction = predict_next_command(telemetry)
+        output = execute_shell(command)
+        await websocket.send_json({
+        "output": output,
+        "prediction": prediction["predicted_next_cmd"]
+    })
+
+
