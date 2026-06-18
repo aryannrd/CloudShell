@@ -1,17 +1,18 @@
+import asyncio
+import json
 import sqlite3
-from fastapi import FastAPI, WebSocket
+import struct
+import sys
+import termios
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 import os
-import subprocess
+import pty
+import signal
+import fcntl
 
-def execute_shell(command):
-    result = subprocess.run(
-        ["./myshell"],
-        input=command + "\n",
-        text=True,
-        capture_output=True
-    )
-    return result.stdout
+shell_pids = set()
+
 class TelemetryE(BaseModel):
     timestamp: int
     cmd: str
@@ -24,12 +25,12 @@ def init_db():
     con = sqlite3.connect(db_path)
     cur = con.cursor()
     cur.execute("""CREATE TABLE IF NOT EXISTS telemetry(
-                id INTEGER PRIMARY KEY,
-                timestamp INTEGER,
-                cmd TEXT,
-                cwd TEXT,
-                exit_code INTEGER,
-                duration_ms INTEGER);""")
+                                                           id INTEGER PRIMARY KEY,
+                                                           timestamp INTEGER,
+                                                           cmd TEXT,
+                                                           cwd TEXT,
+                                                           exit_code INTEGER,
+                                                           duration_ms INTEGER);""")
     con.commit()
     con.close()
 
@@ -58,10 +59,10 @@ def stats_query():
     con = sqlite3.connect(db_path)
     cur= con.cursor()
     cur.execute("""SELECT cmd, COUNT(*) as count
-            FROM telemetry
-            GROUP BY cmd
-            ORDER BY count DESC
-            LIMIT 5;""")
+                   FROM telemetry
+                   GROUP BY cmd
+                   ORDER BY count DESC
+                       LIMIT 5;""")
     rows= cur.fetchall()
     con.close()
     return [{"cmd": r[0], "count": r[1]} for r in rows]
@@ -116,21 +117,68 @@ def predict_next_command(current_context: TelemetryE):
 @app.websocket("/terminal")
 async def terminal(websocket: WebSocket):
     await websocket.accept()
-    while True:
-        command = await websocket.recieve_text()
-        telemetry = TelemetryE(
-            timestamp=0,
-            cmd=command,
-            exit_code=0,
-            cwd="~",
-            duration_ms=0
-        )
-        log_command(telemetry)
-        prediction = predict_next_command(telemetry)
-        output = execute_shell(command)
-        await websocket.send_json({
-        "output": output,
-        "prediction": prediction["predicted_next_cmd"]
-    })
+    pid, fd = pty.fork()
+    if pid == 0:
+        try:
+            os.execv("/Users/aryan/CLionProjects/mock-shell/cmake-build-debug/./mock_shell",["/Users/aryan/CLionProjects/mock-shell/cmake-build-debug/./mock_shell"])
+        except:
+            os._exit(1)
 
+    shell_pids.add(pid)
+    fcntl.fcntl(fd, fcntl.F_SETFL, os.O_NONBLOCK)
+    async def read_pty():
+        while True:
+            try:
+                data = os.read(fd, 1024)
+                if data:
+                    await websocket.send_text(
+                        data.decode(errors="ignore")
+                    )
+            except BlockingIOError:
+                await asyncio.sleep(0.01)
+            except:
+                break
+    reader = asyncio.create_task(read_pty())
 
+    try:
+        while True:
+            message = await websocket.receive_text()
+            try:
+                msg = json.loads(message)
+                if msg.get("type") == "resize":
+                    try:
+                        fcntl.ioctl(fd,
+                            termios.TIOCSWINSZ,
+                            struct.pack("HHHH",msg["rows"],msg["cols"],0,0))
+                    except:
+                        pass
+            except json.JSONDecodeError:
+                try:
+                    os.write(fd, message.encode())
+                except:
+                    break
+    except WebSocketDisconnect:
+        print("Client disconnected")
+
+    finally:
+        reader.cancel()
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except:
+            pass
+        try:
+            os.close(fd)
+        except:
+            pass
+        try:
+            shell_pids.discard(pid)
+        except:
+            pass
+
+@app.on_event("shutdown")
+def shutdown():
+    for pid in list(shell_pids):
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except:
+            pass

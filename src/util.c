@@ -25,9 +25,9 @@ void enable_raw() {
     tcgetattr(STDIN_FILENO,&orig);
     raw = orig;
     raw.c_lflag &= ~(ECHO | ICANON);
-    tcsetattr(STDIN_FILENO,TCSAFLUSH, &raw);
-    struct termios check;
-    tcgetattr(STDIN_FILENO, &check);
+    raw.c_cc[VMIN] = 1;
+    raw.c_cc[VTIME] = 0;
+    tcsetattr(STDIN_FILENO,TCSAFLUSH,&raw);
 }
 
 void disable_raw() {
@@ -41,15 +41,17 @@ void read_line() {
     int history_index = history_count;
     buf[0] = '\0';
 
-    // Print prompt once at the start
     write(STDOUT_FILENO, "myshell:", 8);
     write(STDOUT_FILENO, interface, strlen(interface));
     write(STDOUT_FILENO, "> ", 2);
 
     while (1) {
-        if (read(STDIN_FILENO, &c, 1) != 1)
-            continue;
-
+        int n = read(STDIN_FILENO, &c, 1);
+        if (n < 0) {
+            if (errno == EINTR)
+                continue;
+            exit(1);
+        }
         if (c == '\n' || c == '\r') {
             write(STDOUT_FILENO, "\n", 1);
             buf[counter] = '\0';
@@ -65,39 +67,41 @@ void read_line() {
                 cursor--;
                 buf[counter] = '\0';
                 write(STDOUT_FILENO, "\b", 1);
-                write(STDOUT_FILENO, &buf[cursor], counter - cursor);
                 write(STDOUT_FILENO, " ", 1);
-                int move_back = counter - cursor + 1;
-                for (int i = 0; i < move_back; i++)
-                    write(STDOUT_FILENO, "\033[D", 3);
+                write(STDOUT_FILENO, "\b", 1);
             }
             continue;
         }
 
         if (c == 27) {
             char d, e;
-            if (read(STDIN_FILENO, &d, 1) != 1) continue;
-            if (read(STDIN_FILENO, &e, 1) != 1) continue;
 
-            // helper macro to redraw full line
-            #define REDRAW() do { \
-                write(STDOUT_FILENO, "\r\033[K", 4); \
-                write(STDOUT_FILENO, "myshell:", 8); \
-                write(STDOUT_FILENO, interface, strlen(interface)); \
-                write(STDOUT_FILENO, "> ", 2); \
-                write(STDOUT_FILENO, buf, counter); \
-            } while(0)
+            if (read(STDIN_FILENO, &d, 1) != 1)
+                continue;
 
-            if (d == '[' && e == 'A') {
+            if (d != '[')
+                continue;
+
+            if (read(STDIN_FILENO, &e, 1) != 1)
+                continue;
+
+            if (e == 'A') {
                 if (history_count > 0 && history_index > 0)
                     history_index--;
                 if (history_index < history_count && history[history_index]) {
                     strcpy(buf, history[history_index]);
                     counter = strlen(buf);
                     cursor = counter;
-                    REDRAW();
+
+                    write(STDOUT_FILENO, "\r\033[K", 4);
+                    write(STDOUT_FILENO, "myshell:", 8);
+                    write(STDOUT_FILENO, interface, strlen(interface));
+                    write(STDOUT_FILENO, "> ", 2);
+                    write(STDOUT_FILENO, buf, counter);
                 }
-            } else if (d == '[' && e == 'B') {
+            }
+
+            else if (e == 'B') {
                 if (history_index < history_count - 1) {
                     history_index++;
                     strcpy(buf, history[history_index]);
@@ -107,13 +111,22 @@ void read_line() {
                 }
                 counter = strlen(buf);
                 cursor = counter;
-                REDRAW();
-            } else if (d == '[' && e == 'C') {
+
+                write(STDOUT_FILENO, "\r\033[K", 4);
+                write(STDOUT_FILENO, "myshell:", 8);
+                write(STDOUT_FILENO, interface, strlen(interface));
+                write(STDOUT_FILENO, "> ", 2);
+                write(STDOUT_FILENO, buf, counter);
+            }
+
+            else if (e == 'C') {
                 if (cursor < counter) {
                     cursor++;
                     write(STDOUT_FILENO, "\033[C", 3);
                 }
-            } else if (d == '[' && e == 'D') {
+            }
+
+            else if (e == 'D') {
                 if (cursor > 0) {
                     cursor--;
                     write(STDOUT_FILENO, "\033[D", 3);
@@ -123,15 +136,21 @@ void read_line() {
         }
 
         if (c >= 32 && c < 127) {
-            if (counter >= 1023) continue;
+            if (counter >= 1023)
+                continue;
+
             memmove(&buf[cursor+1], &buf[cursor], counter - cursor);
             buf[cursor] = c;
             counter++;
             cursor++;
             buf[counter] = '\0';
-            write(STDOUT_FILENO, &buf[cursor-1], counter - cursor + 1);
-            int move_back = counter - cursor;
-            for (int i = 0; i < move_back; i++)
+            write(STDOUT_FILENO, "\r", 1);
+            write(STDOUT_FILENO, "myshell:", 8);
+            write(STDOUT_FILENO, interface, strlen(interface));
+            write(STDOUT_FILENO, "> ", 2);
+            write(STDOUT_FILENO, buf, counter);
+
+            for (int i = 0; i < counter - cursor; i++)
                 write(STDOUT_FILENO, "\033[D", 3);
         }
     }

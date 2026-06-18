@@ -51,7 +51,7 @@ void send_telemetry(telemetry_t *t) {
 
     char json[2048];
     snprintf(json, sizeof(json),
-        "{\"timestamp\": %ld, \"cwd\": \"%s\", \"cmd\": \"%s\", \"duration_ms\": %ld, \"exit\": %d}",
+        "{\"timestamp\": %ld, \"cwd\": \"%s\", \"cmd\": \"%s\", \"duration_ms\": %ld, \"exit_code\": %d}",
         t->timestamp, t->cwd, escaped_cmd, t->duration_ms, t->exit_code);
 
     struct curl_slist *headers = curl_slist_append(NULL, "Content-Type: application/json");
@@ -91,7 +91,7 @@ void get_prediction(char* cmd) {
         escaped[j++] = cmd[i];
     }
     escaped[j] = '\0';
-    snprintf(json, sizeof(json), "{\"cmd\": \"%s\", \"timestamp\": 0, \"exit\": 0, \"cwd\": \"/\", \"duration_ms\": 0}", escaped);
+    snprintf(json, sizeof(json), "{\"cmd\": \"%s\", \"timestamp\": 0, \"exit_code\": 0, \"cwd\": \"/\", \"duration_ms\": 0}", escaped);
 
     curl_easy_setopt(curl, CURLOPT_URL, "http://127.0.0.1:8000/predict");
     curl_easy_setopt(curl,CURLOPT_POSTFIELDS,json);
