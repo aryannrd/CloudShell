@@ -46,7 +46,7 @@ function App() {
         let socket;
         let handleResize;
         function connect() {
-            socket = new WebSocket("ws://localhost:8000/terminal");
+            socket = new WebSocket("wss://cloudshell-production.up.railway.app/terminal");
             window._socket = socket;
             socket.onopen = () => {
                 socket.send(JSON.stringify({ type: "resize", cols: term.cols, rows: term.rows }));
