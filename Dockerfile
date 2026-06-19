@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     libcjson1 \
     libcurl4 \
     && rm -rf /var/lib/apt/lists/*
-RUN pip install fastapi uvicorn
+RUN pip install fastapi "uvicorn[standard]"
 ENV MOCK_SHELL_PATH=/app/mock-shell
+ENV HOME=/root
 CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]

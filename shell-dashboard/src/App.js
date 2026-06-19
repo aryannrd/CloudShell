@@ -10,7 +10,6 @@ function App() {
 
     useEffect(() => {
         if (termInstanceRef.current || !terminalRef.current) return;
-
         const term = new Terminal({
             cursorBlink: true,
             convertEol: true,
@@ -44,30 +43,40 @@ function App() {
         terminalRef.current.addEventListener("click", () => term.focus());
         setTimeout(() => fitAddon.fit(), 100);
 
-        const socket = new WebSocket("ws://localhost:8000/terminal");
-        window._socket = socket;
-        socket.onopen = () => {
-            socket.send(JSON.stringify({ type: "resize", cols: term.cols, rows: term.rows }));
-            term.onData((data) => {
-                socket.send(data);
-            });
-        };
-
-        socket.onmessage = (event) => {
-            term.write(event.data);
-        };
-
-        const handleResize = () => {
-            fitAddon.fit();
-            if (socket.readyState === WebSocket.OPEN) {
+        let socket;
+        let handleResize;
+        function connect() {
+            socket = new WebSocket("ws://localhost:8000/terminal");
+            window._socket = socket;
+            socket.onopen = () => {
                 socket.send(JSON.stringify({ type: "resize", cols: term.cols, rows: term.rows }));
+            };
+            socket.onmessage = (event) => {
+                term.write(event.data);
+            };
+            socket.onclose = () => {
+                term.write("\r\n\x1b[33mSession ended. Reconnecting...\x1b[0m\r\n");
+                setTimeout(connect, 1000);
+            };
+            handleResize = () => {
+                fitAddon.fit();
+                if (socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ type: "resize", cols: term.cols, rows: term.rows }));
+                }
+            };
+            window.addEventListener("resize", handleResize);
+        }
+
+        connect();
+        term.onData((data) => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(data);
             }
-        };
-        window.addEventListener("resize", handleResize);
+        });
 
         return () => {
-            window.removeEventListener("resize", handleResize);
-            socket.close();
+            if (handleResize) window.removeEventListener("resize", handleResize);
+            if (socket) socket.close();
             term.dispose();
             termInstanceRef.current = null;
         };

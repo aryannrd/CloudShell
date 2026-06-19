@@ -120,7 +120,8 @@ async def terminal(websocket: WebSocket):
     pid, fd = pty.fork()
     if pid == 0:
         try:
-            os.execv("/Users/aryan/CLionProjects/mock-shell/cmake-build-debug/./mock_shell",["/Users/aryan/CLionProjects/mock-shell/cmake-build-debug/./mock_shell"])
+            shell_path = os.environ.get("MOCK_SHELL_PATH", "/bin/bash")
+            os.execv(shell_path, [shell_path])
         except:
             os._exit(1)
 
@@ -134,6 +135,8 @@ async def terminal(websocket: WebSocket):
                     await websocket.send_text(
                         data.decode(errors="ignore")
                     )
+                else:
+                    break
             except BlockingIOError:
                 await asyncio.sleep(0.01)
             except:
@@ -142,7 +145,12 @@ async def terminal(websocket: WebSocket):
 
     try:
         while True:
-            message = await websocket.receive_text()
+            receive_task = asyncio.create_task(websocket.receive_text())
+            done, pending = await asyncio.wait({reader, receive_task}, return_when=asyncio.FIRST_COMPLETED)
+            if reader in done:
+                receive_task.cancel()
+                break
+            message = receive_task.result()
             try:
                 msg = json.loads(message)
                 if isinstance(msg, dict) and msg.get("type") == "resize":
@@ -174,6 +182,10 @@ async def terminal(websocket: WebSocket):
             pass
         try:
             shell_pids.discard(pid)
+        except:
+            pass
+        try:
+            await websocket.close()
         except:
             pass
 
