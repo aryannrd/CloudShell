@@ -145,13 +145,15 @@ async def terminal(websocket: WebSocket):
             message = await websocket.receive_text()
             try:
                 msg = json.loads(message)
-                if msg.get("type") == "resize":
+                if isinstance(msg, dict) and msg.get("type") == "resize":
                     try:
                         fcntl.ioctl(fd,
                             termios.TIOCSWINSZ,
                             struct.pack("HHHH",msg["rows"],msg["cols"],0,0))
                     except:
                         pass
+                else:
+                    os.write(fd, message.encode())
             except json.JSONDecodeError:
                 try:
                     os.write(fd, message.encode())

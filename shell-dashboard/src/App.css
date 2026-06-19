@@ -1,8 +1,71 @@
 .App {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    width: 100vw;
     height: 100vh;
+    box-sizing: border-box;
+    background-color: #0d1117;
+    overflow: hidden;
 }
 
+.terminal-wrapper{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 60vw;
+    height: 60vh;
+
+    border-radius: 12px;
+    background-color: #010409;
+    border: 1px solid #30363d;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+
+    margin-top: 30;
+    margin-bottom: auto;
+    margin-left: 40px;
+    margin-right: 0;
+}
+
+.xterm {
+    height: 100%;
+    width: 100%;
+}
 #terminal {
     width: 100%;
-    height: calc(100vh - 50px);
+    height: 100%;
+    box-sizing: border-box;
+}
+
+h1.title1 {
+    font-family: 'JetBrains Mono', monospace;
+    color: #58a6ff !important;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    height: 80px;
+    margin: 0;
+    padding-left: 40px;
+    box-sizing: border-box;
+}
+
+#terminal .xterm-viewport::-webkit-scrollbar {
+    width: 8px;
+}
+
+#terminal .xterm-viewport::-webkit-scrollbar-track {
+    background: #010409;
+}
+
+#terminal .xterm-viewport::-webkit-scrollbar-thumb {
+    background: #21262d;
+    border-radius: 4px;
+}
+
+#terminal .xterm-viewport::-webkit-scrollbar-thumb:hover {
+    background: #30363d;
 }
