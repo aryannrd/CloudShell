@@ -10,6 +10,8 @@ import os
 import pty
 import signal
 import fcntl
+from fastapi.middleware.cors import CORSMiddleware
+
 
 shell_pids = set()
 
@@ -68,6 +70,18 @@ def stats_query():
     return [{"cmd": r[0], "count": r[1]} for r in rows]
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["cloud-shell-sigma.vercel.app"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.websocket("/terminal")
+async def terminal(websocket: WebSocket):
+    await websocket.accept()
 @app.on_event("startup")
 def startup():
     init_db()
