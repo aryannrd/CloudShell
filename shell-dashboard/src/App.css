@@ -24,7 +24,7 @@
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
     overflow: hidden;
 
-    margin-top: 30;
+    margin-top: 30px;
     margin-bottom: auto;
     margin-left: 40px;
     margin-right: 0;
@@ -68,4 +68,19 @@ h1.title1 {
 
 #terminal .xterm-viewport::-webkit-scrollbar-thumb:hover {
     background: #30363d;
+}
+
+@media (max-width: 768px) {
+    .terminal-wrapper {
+        width: 95vw;
+        height: 70vh;
+        margin-left: 10px;
+        margin-top: 10px;
+    }
+
+    h1.title1 {
+        font-size: 1.5rem;
+        height: 60px;
+        padding-left: 15px;
+    }
 }
