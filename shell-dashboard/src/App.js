@@ -9,6 +9,7 @@ function App() {
     const termInstanceRef = useRef(null);
 
     useEffect(() => {
+        let reconnectDelay = 1000;
         if (termInstanceRef.current || !terminalRef.current) return;
         const term = new Terminal({
             cursorBlink: true,
@@ -56,7 +57,15 @@ function App() {
             };
             socket.onclose = () => {
                 term.write("\r\n\x1b[33mSession ended. Reconnecting...\x1b[0m\r\n");
-                setTimeout(connect, 1000);
+                setTimeout(() => {
+                    reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+                    connect();
+                }, reconnectDelay);
+            };
+
+            socket.onopen = () => {
+                reconnectDelay = 1000;
+                socket.send(JSON.stringify({ type: "resize", cols: term.cols, rows: term.rows }));
             };
             handleResize = () => {
                 fitAddon.fit();
