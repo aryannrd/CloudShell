@@ -47,11 +47,8 @@ function App() {
         let socket;
         let handleResize;
         function connect() {
-            socket = new WebSocket("https://cloudshell-86nr.onrender.com/");
+            socket = new WebSocket("wss://cloudshell-86nr.onrender.com/terminal");
             window._socket = socket;
-            socket.onopen = () => {
-                socket.send(JSON.stringify({ type: "resize", cols: term.cols, rows: term.rows }));
-            };
             socket.onmessage = (event) => {
                 term.write(event.data);
             };

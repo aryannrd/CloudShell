@@ -127,6 +127,11 @@ def predict_next_command(current_context: TelemetryE):
 
 @app.websocket("/terminal")
 async def terminal(websocket: WebSocket):
+    origin = websocket.headers.get("origin", "")
+    allowed = ["https://cloud-shell-sigma.vercel.app", "http://localhost:3000"]
+    if origin not in allowed:
+        await websocket.close(code=1008)
+        return
     await websocket.accept()
     pid, fd = pty.fork()
     if pid == 0:
