@@ -9,7 +9,7 @@ FastAPI Backend (Docker)
         ├── PTY → C Shell process (custom shell that has bash functionality, coded for full functionality)
         └── Markov chain predictor
 
-1. Features
+1. Features 
   -Shell (C)
   -REPL loop with raw mode terminal input (termios)
   -Manual tokenizer and parser with quote and escape character support
