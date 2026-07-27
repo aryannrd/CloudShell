@@ -73,15 +73,12 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["cloud-shell-sigma.vercel.app"],
+    allow_origins=["https://cloud-shell-sigma.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.websocket("/terminal")
-async def terminal(websocket: WebSocket):
-    await websocket.accept()
 @app.on_event("startup")
 def startup():
     init_db()
