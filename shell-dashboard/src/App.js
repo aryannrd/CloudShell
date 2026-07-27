@@ -91,10 +91,26 @@ function App() {
     return (
         <div className="App">
             <h1 className="title1">CloudShell Dashboard</h1>
+            <p className="description">
+                A Unix shell built from scratch in C, with a full-stack telemetry and prediction pipeline.
+                CloudShell executes real system commands, tracks usage patterns, and uses a Markov chain
+                model to predict the next command. All of this is served through a Dockerized FastAPI
+                backend and a React dashboard. Deployed on Render and Vercel.
+            </p>
             <div className="terminal-wrapper">
                 <div style={{ padding: "15px", width: "100%", height: "100%" }}>
                     <div ref={terminalRef} id="terminal"></div>
                 </div>
+            </div>
+            <div className="stack">
+                <span>C</span>
+                <span>FastAPI</span>
+                <span>SQLite</span>
+                <span>Docker</span>
+                <span>React</span>
+                <span>xterm.js</span>
+                <span>Render</span>
+                <span>Vercel</span>
             </div>
         </div>
     );
